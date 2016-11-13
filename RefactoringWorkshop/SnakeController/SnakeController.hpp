@@ -4,7 +4,8 @@
 #include <memory>
 
 #include "IEventHandler.hpp"
-#include "SnakeInterface.hpp"
+
+#include "SnakePosition.hpp"
 
 class Event;
 class IPort;
@@ -12,6 +13,7 @@ class IPort;
 namespace Snake
 {
 class Segments;
+class World;
 
 struct ConfigurationError : std::logic_error
 {
@@ -26,8 +28,8 @@ struct UnexpectedEventException : std::runtime_error
 class Controller : public IEventHandler
 {
 public:
-    Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePort, std::string const& p_config);
-    ~Controller();
+    Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, std::string const& config);
+    ~Controller() override;
 
     Controller(Controller const& p_rhs) = delete;
     Controller& operator=(Controller const& p_rhs) = delete;
@@ -39,9 +41,7 @@ private:
     IPort& m_foodPort;
     IPort& m_scorePort;
 
-    std::pair<int, int> m_mapDimension;
-    std::pair<int, int> m_foodPosition;
-
+    std::unique_ptr<World> m_world;
     std::unique_ptr<Segments> m_segmentss;
 
     void handleTimeoutInd();
@@ -49,16 +49,15 @@ private:
     void handleFoodInd(std::unique_ptr<Event>);
     void handleFoodResp(std::unique_ptr<Event>);
 
-    void updateSegmentsIfSuccessfullMove(int x, int y);
-    void addHeadSegment(int x, int y);
-    void removeTailSegmentIfNotScored(int x, int y);
+    void updateSegmentsIfSuccessfullMove(Position position);
+    void addHeadSegment(Position position);
+    void removeTailSegmentIfNotScored(Position position);
     void removeTailSegment();
 
-    bool isPositionOutsideMap(int x, int y) const;
-
-    void updateFoodPosition(int x, int y, std::function<void()> clearPolicy);
+    void updateFoodPosition(Position position, std::function<void()> clearPolicy);
     void sendClearOldFood();
-    void sendPlaceNewFood(int x, int y);
+    void sendPlaceNewFood(Position position);
 };
+
 
 } // namespace Snake
