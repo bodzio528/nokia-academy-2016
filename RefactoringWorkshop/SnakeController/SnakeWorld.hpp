@@ -2,26 +2,25 @@
 
 #include <functional>
 
-#include "SnakePosition.hpp"
+#include "SnakeIWalkable.hpp"
 #include "SnakeDimension.hpp"
 
 class IPort;
 
 namespace Snake
 {
-class Segments;
+class ICollisionDetector;
 
-class World
+class World : public IWalkable
 {
 public:
     World(IPort& foodPort, IPort& displayPort, Dimension dimension, Position food);
 
+    bool canWalk(Position position) const override;
+    bool canEat(Position position) const override;
 
-    bool contains(Position position) const;
-    bool eatFood(Position position) const;
-
-    void updateFoodPosition(Position position, Segments const& segments);
-    void placeFood(Position position, Segments const& segments);
+    void updateFoodPosition(Position position, ICollisionDetector const& segments);
+    void placeFood(Position position, ICollisionDetector const& segments);
 
 private:
     IPort& m_displayPort;
@@ -32,7 +31,7 @@ private:
 
     void sendPlaceNewFood(Position position);
     void sendClearOldFood();
-    void updateFoodPositionWithCleanPolicy(Position position, Segments const& segments, std::function<void()> clearPolicy);
+    void updateFoodPositionWithCleanPolicy(Position, ICollisionDetector const&, std::function<void()>);
 };
 
 } // namespace Snake

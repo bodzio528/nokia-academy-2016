@@ -5,7 +5,7 @@
 #include "IPort.hpp"
 #include "EventT.hpp"
 
-#include "SnakeWorld.hpp"
+#include "SnakeIWalkable.hpp"
 
 namespace Snake
 {
@@ -47,8 +47,7 @@ void Segments::addSegment(Position position)
 
 bool Segments::isCollision(Position position) const
 {
-    return m_segments.end() !=  std::find_if(m_segments.cbegin(), m_segments.cend(),
-        [position](auto const& segment){ return segment.x == position.x and segment.y == position.y; });
+    return m_segments.end() !=  std::find(m_segments.cbegin(), m_segments.cend(), position);
 }
 
 void Segments::addHead(Position position)
@@ -81,7 +80,7 @@ void Segments::updateDirection(Direction newDirection)
     }
 }
 
-void Segments::nextStep(const World &world)
+void Segments::nextStep(IWalkable const& world)
 {
     updateSegments(nextHead(), world);
 }
@@ -110,18 +109,18 @@ void Segments::addHeadSegment(Position position)
     m_displayPort.send(std::make_unique<EventT<DisplayInd>>(placeNewHead));
 }
 
-void Segments::removeTailSegmentIfNotScored(Position position, const World &world)
+void Segments::removeTailSegmentIfNotScored(Position position, IWalkable const& world)
 {
-    if (world.eatFood(position)) {
+    if (world.canEat(position)) {
         m_scorePort.send(std::make_unique<EventT<ScoreInd>>());
     } else {
         removeTailSegment();
     }
 }
 
-void Segments::updateSegments(Position position, const World &world)
+void Segments::updateSegments(Position position, IWalkable const& world)
 {
-    if (isCollision(position) or not world.contains(position)) {
+    if (isCollision(position) or not world.canWalk(position)) {
         m_scorePort.send(std::make_unique<EventT<LooseInd>>());
     } else {
         addHeadSegment(position);

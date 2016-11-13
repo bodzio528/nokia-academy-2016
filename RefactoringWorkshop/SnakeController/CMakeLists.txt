@@ -13,6 +13,8 @@ set(SNAKE_HEADERS
     SnakeSegments.hpp
     SnakePosition.hpp
     SnakeWorld.hpp
+    SnakeIWalkable.hpp
+    SnakeICollisionDetector.hpp
 )
 add_library(${TARGET_NAME} STATIC ${SNAKE_SOURCES} ${SNAKE_HEADERS})
 target_link_libraries(${TARGET_NAME} DynamicEvents)

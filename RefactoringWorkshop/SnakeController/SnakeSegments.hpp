@@ -3,25 +3,25 @@
 #include <list>
 
 #include "SnakeInterface.hpp"
-#include "SnakePosition.hpp"
+#include "SnakeICollisionDetector.hpp"
 
 class IPort;
 
 namespace Snake
 {
-class World;
+class IWalkable;
 
-class Segments
+class Segments : public ICollisionDetector
 {
 public:
     Segments(IPort& displayPort, IPort& scorePort, Direction direction);
 
-    void nextStep(World const& world);
+    void nextStep(IWalkable const& world);
 
     void addSegment(Position position);
     void updateDirection(Direction newDirection);
 
-    bool isCollision(Position position) const;
+    bool isCollision(Position position) const override;
 
 private:
     IPort& m_displayPort;
@@ -36,8 +36,8 @@ private:
 
     void removeTailSegment();
     void addHeadSegment(Position position);
-    void removeTailSegmentIfNotScored(Position position, World const& world);
-    void updateSegments(Position position, World const& world);
+    void removeTailSegmentIfNotScored(Position position, IWalkable const& world);
+    void updateSegments(Position position, IWalkable const& world);
 };
 
 } // namespace Snake

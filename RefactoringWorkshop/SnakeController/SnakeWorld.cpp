@@ -4,7 +4,7 @@
 #include "EventT.hpp"
 
 #include "SnakeInterface.hpp"
-#include "SnakeSegments.hpp"
+#include "SnakeICollisionDetector.hpp"
 
 namespace Snake
 {
@@ -16,12 +16,12 @@ World::World(IPort& displayPort, IPort& foodPort, Dimension dimension, Position 
       m_dimension(dimension)
 {}
 
-bool World::contains(Position position) const
+bool World::canWalk(Position position) const
 {
     return m_dimension.isInside(position);
 }
 
-bool World::eatFood(Position position) const
+bool World::canEat(Position position) const
 {
     bool eaten = (m_foodPosition == position);
     if (eaten) {
@@ -30,12 +30,12 @@ bool World::eatFood(Position position) const
     return eaten;
 }
 
-void World::updateFoodPosition(Position position, const Segments &segments)
+void World::updateFoodPosition(Position position, ICollisionDetector const& segments)
 {
     updateFoodPositionWithCleanPolicy(position, segments, std::bind(&World::sendClearOldFood, this));
 }
 
-void World::placeFood(Position position, const Segments &segments)
+void World::placeFood(Position position, ICollisionDetector const& segments)
 {
     static auto noCleanPolicy = []{};
     updateFoodPositionWithCleanPolicy(position, segments, noCleanPolicy);
@@ -63,7 +63,7 @@ void World::sendClearOldFood()
     m_displayPort.send(std::make_unique<EventT<DisplayInd>>(clearOldFood));
 }
 
-void World::updateFoodPositionWithCleanPolicy(Position position, const Segments &segments, std::function<void ()> clearPolicy)
+void World::updateFoodPositionWithCleanPolicy(Position position, ICollisionDetector const& segments, std::function<void ()> clearPolicy)
 {
     if (segments.isCollision(position)) {
         m_foodPort.send(std::make_unique<EventT<FoodReq>>());
