@@ -21,9 +21,6 @@ UnexpectedEventException::UnexpectedEventException()
 {}
 
 Controller::Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, std::string const& initialConfiguration)
-    : m_displayPort(displayPort),
-      m_foodPort(foodPort),
-      m_scorePort(scorePort)
 {
     std::istringstream istr(initialConfiguration);
     char w, f, s, d;
@@ -38,7 +35,7 @@ Controller::Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, st
             Position foodPosition;
             istr >> foodPosition.x >> foodPosition.y;
 
-            m_world = std::make_unique<World>(m_displayPort, m_foodPort, worldDimension, foodPosition);
+            m_world = std::make_unique<World>(displayPort, foodPort, worldDimension, foodPosition);
         } else {
             throw ConfigurationError();
         }
@@ -66,7 +63,7 @@ Controller::Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, st
             default:
                 throw ConfigurationError();
         }
-        m_segmentss = std::make_unique<Segments>(m_displayPort, m_scorePort, startDirection);
+        m_segmentss = std::make_unique<Segments>(displayPort, scorePort, startDirection);
 
         int length;
         istr >> length;
