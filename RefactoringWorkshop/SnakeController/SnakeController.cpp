@@ -38,7 +38,7 @@ Controller::Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, st
             Position foodPosition;
             istr >> foodPosition.x >> foodPosition.y;
 
-            m_world = std::make_unique<World>(worldDimension, foodPosition);
+            m_world = std::make_unique<World>(m_foodPort, worldDimension, foodPosition);
         } else {
             throw ConfigurationError();
         }
@@ -66,7 +66,7 @@ Controller::Controller(IPort& displayPort, IPort& foodPort, IPort& scorePort, st
             default:
                 throw ConfigurationError();
         }
-        m_segmentss = std::make_unique<Segments>(startDirection);
+        m_segmentss = std::make_unique<Segments>(m_displayPort, m_scorePort, startDirection);
 
         int length;
         istr >> length;
@@ -108,54 +108,9 @@ void Controller::sendClearOldFood()
     m_displayPort.send(std::make_unique<EventT<DisplayInd>>(clearOldFood));
 }
 
-void Controller::removeTailSegment()
-{
-    auto tail = m_segmentss->removeTail();
-
-    DisplayInd clearTail;
-    clearTail.x = tail.x;
-    clearTail.y = tail.y;
-    clearTail.value = Cell_FREE;
-
-    m_displayPort.send(std::make_unique<EventT<DisplayInd>>(clearTail));
-}
-
-void Controller::addHeadSegment(Position position)
-{
-    m_segmentss->addHead(position);
-
-    DisplayInd placeNewHead;
-    placeNewHead.x = position.x;
-    placeNewHead.y = position.y;
-    placeNewHead.value = Cell_SNAKE;
-
-    m_displayPort.send(std::make_unique<EventT<DisplayInd>>(placeNewHead));
-}
-
-void Controller::removeTailSegmentIfNotScored(Position position)
-{
-    if (position == m_world->getFoodPosition()) {
-        m_scorePort.send(std::make_unique<EventT<ScoreInd>>());
-        m_foodPort.send(std::make_unique<EventT<FoodReq>>());
-    } else {
-        removeTailSegment();
-    }
-}
-
-void Controller::updateSegmentsIfSuccessfullMove(Position position)
-{
-    if (m_segmentss->isCollision(position) or not m_world->contains(position)) {
-        m_scorePort.send(std::make_unique<EventT<LooseInd>>());
-    } else {
-        addHeadSegment(position);
-        removeTailSegmentIfNotScored(position);
-    }
-}
-
 void Controller::handleTimeoutInd()
 {
-    auto newHead = m_segmentss->nextHead();
-    updateSegmentsIfSuccessfullMove(newHead);
+    m_segmentss->nextStep(*m_world);
 }
 
 void Controller::handleDirectionInd(std::unique_ptr<Event> e)
