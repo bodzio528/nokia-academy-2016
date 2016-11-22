@@ -1,29 +1,39 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 
 #include "Event.hpp"
 
 template <class T>
 class EventT : public Event
 {
+    static_assert(std::is_copy_constructible<T>::value, "Payload type must be copy-construcible!");
 public:
     EventT(T const& payload = T())
-        : m_payload(payload)
+        : m_payload(std::make_unique<T>(payload))
     {}
 
-    std::unique_ptr<EventT> clone() const { return std::make_unique<EventT<T>>(m_payload); }
+    EventT(T&& payload)
+        : m_payload(std::make_unique<T>(std::forward<T>(payload)))
+    {}
+
+    EventT(EventT&&) = default;
+
+    EventT(EventT<T> const&) = delete;
+    EventT& operator=(EventT<T> const&) = delete;
 
     std::uint32_t getMessageId() const override { return T::MESSAGE_ID; };
+    std::unique_ptr<Event> clone() const { return std::make_unique<EventT<T>>(*m_payload); }
 
-    T * const operator->() noexcept { return std::addressof(m_payload); }
-    T const * const operator->() const noexcept { return std::addressof(m_payload); }
+    T * const operator->() noexcept { return m_payload.get(); }
+    T const * const operator->() const noexcept { return m_payload.get(); }
 
-    T& operator*() noexcept { return m_payload; }
-    T const& operator*() const noexcept { return m_payload; }
+    T& operator*() noexcept { return *m_payload; }
+    T const& operator*() const noexcept { return *m_payload; }
 
 private:
-    T m_payload;
+    std::unique_ptr<T> m_payload;
 };
 
 template <class T>
